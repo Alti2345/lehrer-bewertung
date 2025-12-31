@@ -20,6 +20,7 @@ const teachers = [
 ];
 
 const list = document.getElementById("teacher-list");
+const hasVoted = localStorage.getItem("hasVoted") === "true";
 
 teachers.forEach(t => {
     const card = document.createElement("div");
@@ -34,7 +35,14 @@ teachers.forEach(t => {
     for (let i = 1; i <= 5; i++) {
         const star = document.createElement("span");
         star.textContent = "⭐";
-        star.onclick = () => addRating(t.id, i);
+
+        if (!hasVoted) {
+            star.onclick = () => addRating(t.id, i);
+        } else {
+            star.style.opacity = "0.4";
+            star.style.cursor = "not-allowed";
+        }
+
         starsDiv.appendChild(star);
     }
 
@@ -46,17 +54,30 @@ teachers.forEach(t => {
     card.appendChild(starsDiv);
     card.appendChild(avg);
 
-    list.appendChild(card);
+    if (hasVoted) {
+        const info = document.createElement("div");
+        info.textContent = "Du hast bereits abgestimmt";
+        info.style.color = "#888";
+        info.style.marginTop = "8px";
+        card.appendChild(info);
+    }
 
+    list.appendChild(card);
     updateAverage(t.id);
 });
 
 function addRating(id, value) {
+    if (localStorage.getItem("hasVoted") === "true") {
+        return;
+    }
+
     const key = `ratings_${id}`;
     const ratings = JSON.parse(localStorage.getItem(key)) || [];
     ratings.push(value);
     localStorage.setItem(key, JSON.stringify(ratings));
-    updateAverage(id);
+
+    localStorage.setItem("hasVoted", "true");
+    location.reload(); // Seite neu laden, um Sperre zu aktivieren
 }
 
 function updateAverage(id) {
@@ -71,5 +92,5 @@ function updateAverage(id) {
     const sum = ratings.reduce((a, b) => a + b, 0);
     const avg = (sum / ratings.length).toFixed(1);
 
-    avgDiv.textContent = `⭐ ${avg} / 5  (${ratings.length} Bewertungen)`;
+    avgDiv.textContent = `⭐ ${avg} / 5 (${ratings.length} Bewertungen)`;
 }
