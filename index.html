@@ -2,28 +2,15 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Lehrer bewerten</title>
+    <title>Lehrerbewertung</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>Lehrerbewertung</h1>
+<h1>⭐ Lehrerbewertung</h1>
+<p>Tippe auf einen Lehrer und gib deine Sterne ab</p>
 
-<div id="teacher-list"></div>
-
-<div id="rating-box" class="hidden">
-    <h2 id="teacher-name"></h2>
-
-    <div id="stars">
-        <span data-value="1">⭐</span>
-        <span data-value="2">⭐</span>
-        <span data-value="3">⭐</span>
-        <span data-value="4">⭐</span>
-        <span data-value="5">⭐</span>
-    </div>
-
-    <button onclick="saveRating()">Bewertung speichern</button>
-</div>
+<div id="teacher-list" class="grid"></div>
 
 <script src="script.js"></script>
 </body>
