@@ -20,6 +20,7 @@ const teachers = [
 ];
 
 const list = document.getElementById("teacher-list");
+const rankingDiv = document.getElementById("ranking");
 const hasVoted = localStorage.getItem("hasVoted") === "true";
 
 teachers.forEach(t => {
@@ -66,10 +67,10 @@ teachers.forEach(t => {
     updateAverage(t.id);
 });
 
+updateRanking();
+
 function addRating(id, value) {
-    if (localStorage.getItem("hasVoted") === "true") {
-        return;
-    }
+    if (localStorage.getItem("hasVoted") === "true") return;
 
     const key = `ratings_${id}`;
     const ratings = JSON.parse(localStorage.getItem(key)) || [];
@@ -77,20 +78,52 @@ function addRating(id, value) {
     localStorage.setItem(key, JSON.stringify(ratings));
 
     localStorage.setItem("hasVoted", "true");
-    location.reload(); // Seite neu laden, um Sperre zu aktivieren
+    location.reload();
+}
+
+function getAverage(id) {
+    const ratings = JSON.parse(localStorage.getItem(`ratings_${id}`)) || [];
+    if (ratings.length === 0) return null;
+
+    const sum = ratings.reduce((a, b) => a + b, 0);
+    return {
+        avg: sum / ratings.length,
+        count: ratings.length
+    };
 }
 
 function updateAverage(id) {
-    const ratings = JSON.parse(localStorage.getItem(`ratings_${id}`)) || [];
+    const data = getAverage(id);
     const avgDiv = document.getElementById(`avg-${id}`);
 
-    if (ratings.length === 0) {
+    if (!data) {
         avgDiv.textContent = "Noch keine Bewertung";
         return;
     }
 
-    const sum = ratings.reduce((a, b) => a + b, 0);
-    const avg = (sum / ratings.length).toFixed(1);
+    avgDiv.textContent = `⭐ ${data.avg.toFixed(1)} / 5 (${data.count} Bewertungen)`;
+}
 
-    avgDiv.textContent = `⭐ ${avg} / 5 (${ratings.length} Bewertungen)`;
+function updateRanking() {
+    const ranking = teachers
+        .map(t => {
+            const data = getAverage(t.id);
+            return data ? { name: t.name, ...data } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.avg - a.avg);
+
+    rankingDiv.innerHTML = "";
+
+    if (ranking.length === 0) {
+        rankingDiv.textContent = "Noch keine Bewertungen vorhanden.";
+        return;
+    }
+
+    ranking.forEach((t, index) => {
+        const row = document.createElement("div");
+        row.textContent =
+            `${index + 1}. ${t.name} – ⭐ ${t.avg.toFixed(1)} (${t.count})`;
+        rankingDiv.appendChild(row);
+    });
 }
