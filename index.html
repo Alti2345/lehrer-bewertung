@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Lehrer bewerten</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Lehrerbewertung</h1>
+
+<div id="teacher-list"></div>
+
+<div id="rating-box" class="hidden">
+    <h2 id="teacher-name"></h2>
+
+    <div id="stars">
+        <span data-value="1">⭐</span>
+        <span data-value="2">⭐</span>
+        <span data-value="3">⭐</span>
+        <span data-value="4">⭐</span>
+        <span data-value="5">⭐</span>
+    </div>
+
+    <button onclick="saveRating()">Bewertung speichern</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
