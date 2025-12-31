@@ -1,19 +1,22 @@
-// 🔥 Firebase Konfiguration
+/*************************
+ * 🔥 FIREBASE START
+ *************************/
 const firebaseConfig = {
     apiKey: "AIzaSyBqbZbD14_YvUSd2V5617P1Nz29S-KGPuE",
     authDomain: "lehrer-bewertung-f2f24.firebaseapp.com",
-    databaseURL: "https://lehrer-bewertung-f2f24-default-rtdb.firebaseio.com",
+    databaseURL: "https://lehrer-bewertung-f2f24-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "lehrer-bewertung-f2f24",
-    storageBucket: "lehrer-bewertung-f2f24.firebasestorage.app",
+    storageBucket: "lehrer-bewertung-f2f24.appspot.com",
     messagingSenderId: "454568720300",
     appId: "1:454568720300:web:1c0dd602824b4257c26c09"
 };
 
-// Firebase starten
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Lehrer
+/*************************
+ * 👨‍🏫 LEHRER
+ *************************/
 const teachers = [
     { id: 1, name: "Ingrid Vogtenhuber" },
     { id: 2, name: "Markus Anzinger" },
@@ -42,25 +45,50 @@ const teachers = [
 const list = document.getElementById("teacher-list");
 const rankingDiv = document.getElementById("ranking");
 
-// 🔄 LIVE-DATEN LADEN
-db.ref("ratings").on("value", snap => {
-    const data = snap.val() || {};
+/*************************
+ * 🔄 LIVE-DATEN LADEN
+ *************************/
+db.ref("ratings").on("value", snapshot => {
+    const data = snapshot.val() || {};
     render(data);
 });
 
+/*************************
+ * 🎨 RENDER FUNKTION
+ *************************/
 function render(data) {
     list.innerHTML = "";
     rankingDiv.innerHTML = "";
 
-    const ranked = teachers.map(t => {
-        const r = data[t.id] || [];
-        const avg = r.length ? r.reduce((a,b)=>a+b,0)/r.length : null;
-        return { ...t, avg, count: r.length };
-    }).filter(t=>t.avg!==null).sort((a,b)=>b.avg-a.avg);
+    // Durchschnitt berechnen
+    const stats = teachers.map(t => {
+        const ratingsObj = data[t.id] || {};
+        const values = Object.values(ratingsObj);
+        const avg = values.length
+            ? values.reduce((a, b) => a + b, 0) / values.length
+            : null;
 
-    teachers.forEach(t => {
+        return {
+            ...t,
+            avg,
+            count: values.length
+        };
+    });
+
+    // Rangliste
+    const ranked = stats
+        .filter(t => t.avg !== null)
+        .sort((a, b) => b.avg - a.avg);
+
+    // Lehrer-Karten
+    stats.forEach(t => {
         const card = document.createElement("div");
         card.className = "card";
+
+        const rankIndex = ranked.findIndex(r => r.id === t.id);
+        if (rankIndex === 0) card.classList.add("gold");
+        if (rankIndex === 1) card.classList.add("silver");
+        if (rankIndex === 2) card.classList.add("bronze");
 
         const title = document.createElement("h2");
         title.textContent = t.name;
@@ -68,35 +96,41 @@ function render(data) {
         const stars = document.createElement("div");
         stars.className = "stars";
 
-        const voted = localStorage.getItem(`voted_${t.id}`) === "true";
+        const votedKey = `voted_teacher_${t.id}`;
+        const alreadyVoted = localStorage.getItem(votedKey) === "true";
 
-        for (let i=1;i<=5;i++){
-            const s=document.createElement("span");
-            s.textContent="⭐";
-            if(!voted){
-                s.onclick=()=>{
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement("span");
+            star.textContent = "⭐";
+
+            if (!alreadyVoted) {
+                star.onclick = () => {
                     db.ref(`ratings/${t.id}`).push(i);
-                    localStorage.setItem(`voted_${t.id}`,"true");
+                    localStorage.setItem(votedKey, "true");
                 };
             } else {
-                s.style.opacity="0.4";
+                star.style.opacity = "0.4";
+                star.style.cursor = "not-allowed";
             }
-            stars.appendChild(s);
+
+            stars.appendChild(star);
         }
 
-        const avg=document.createElement("div");
-        avg.className="avg";
-        avg.textContent = t.avg
+        const avgDiv = document.createElement("div");
+        avgDiv.className = "avg";
+        avgDiv.textContent = t.avg
             ? `⭐ ${t.avg.toFixed(1)} / 5 (${t.count})`
             : "Noch keine Bewertung";
 
-        card.append(title,stars,avg);
+        card.append(title, stars, avgDiv);
         list.appendChild(card);
     });
 
-    ranked.slice(0,3).forEach((t,i)=>{
-        const row=document.createElement("div");
-        row.textContent = ["🥇","🥈","🥉"][i]+" "+t.name;
+    // Top 3 anzeigen
+    ranked.slice(0, 3).forEach((t, i) => {
+        const row = document.createElement("div");
+        row.textContent = ["🥇", "🥈", "🥉"][i] + " " + t.name +
+            ` – ⭐ ${t.avg.toFixed(1)}`;
         rankingDiv.appendChild(row);
     });
 }
