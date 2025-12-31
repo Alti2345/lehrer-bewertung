@@ -20,80 +20,88 @@ const teachers = [
 ];
 
 const list = document.getElementById("teacher-list");
+const rankingDiv = document.getElementById("ranking");
 
-teachers.forEach(t => {
-    const card = document.createElement("div");
-    card.className = "card";
+/* ===== Dark Mode ===== */
+const toggle = document.getElementById("themeToggle");
+if (localStorage.getItem("dark") === "true") {
+    document.body.classList.add("dark");
+}
+toggle.onclick = () => {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("dark", document.body.classList.contains("dark"));
+};
 
-    const title = document.createElement("h2");
-    title.textContent = t.name;
+/* ===== Bewertungen ===== */
+function getRatings(id) {
+    return JSON.parse(localStorage.getItem(`ratings_${id}`)) || [];
+}
 
-    const starsDiv = document.createElement("div");
-    starsDiv.className = "stars";
+function getAverage(id) {
+    const r = getRatings(id);
+    if (r.length === 0) return null;
+    return r.reduce((a,b)=>a+b,0) / r.length;
+}
 
-    const hasVotedForTeacher =
-        localStorage.getItem(`voted_teacher_${t.id}`) === "true";
+function render() {
+    list.innerHTML = "";
+    rankingDiv.innerHTML = "";
 
-    for (let i = 1; i <= 5; i++) {
-        const star = document.createElement("span");
-        star.textContent = "⭐";
+    const ranked = teachers
+        .map(t => ({ ...t, avg: getAverage(t.id), count: getRatings(t.id).length }))
+        .filter(t => t.avg !== null)
+        .sort((a,b)=>b.avg-a.avg);
 
-        if (!hasVotedForTeacher) {
-            star.onclick = () => addRating(t.id, i);
-        } else {
-            star.style.opacity = "0.4";
-            star.style.cursor = "not-allowed";
+    teachers.forEach(t => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const rankIndex = ranked.findIndex(r => r.id === t.id);
+        if (rankIndex === 0) card.classList.add("gold");
+        if (rankIndex === 1) card.classList.add("silver");
+        if (rankIndex === 2) card.classList.add("bronze");
+
+        const title = document.createElement("h2");
+        title.textContent = t.name;
+
+        const stars = document.createElement("div");
+        stars.className = "stars";
+
+        const voted = localStorage.getItem(`voted_teacher_${t.id}`) === "true";
+
+        for (let i=1;i<=5;i++){
+            const s=document.createElement("span");
+            s.textContent="⭐";
+            if(!voted){
+                s.onclick=()=>{
+                    const r=getRatings(t.id);
+                    r.push(i);
+                    localStorage.setItem(`ratings_${t.id}`,JSON.stringify(r));
+                    localStorage.setItem(`voted_teacher_${t.id}`,"true");
+                    render();
+                };
+            } else {
+                s.style.opacity="0.4";
+            }
+            stars.appendChild(s);
         }
 
-        starsDiv.appendChild(star);
-    }
+        const avg=document.createElement("div");
+        avg.className="avg";
+        avg.textContent = t.avg
+            ? `⭐ ${t.avg.toFixed(1)} / 5 (${t.count})`
+            : "Noch keine Bewertung";
 
-    const avg = document.createElement("div");
-    avg.className = "avg";
-    avg.id = `avg-${t.id}`;
+        card.append(title,stars,avg);
+        list.appendChild(card);
+    });
 
-    card.appendChild(title);
-    card.appendChild(starsDiv);
-    card.appendChild(avg);
-
-    if (hasVotedForTeacher) {
-        const info = document.createElement("div");
-        info.textContent = "Du hast diesen Lehrer bereits bewertet";
-        info.style.color = "#888";
-        info.style.marginTop = "6px";
-        card.appendChild(info);
-    }
-
-    list.appendChild(card);
-    updateAverage(t.id);
-});
-
-function addRating(id, value) {
-    if (localStorage.getItem(`voted_teacher_${id}`) === "true") {
-        return;
-    }
-
-    const key = `ratings_${id}`;
-    const ratings = JSON.parse(localStorage.getItem(key)) || [];
-    ratings.push(value);
-    localStorage.setItem(key, JSON.stringify(ratings));
-
-    localStorage.setItem(`voted_teacher_${id}`, "true");
-
-    location.reload();
+    ranked.slice(0,3).forEach((t,i)=>{
+        const row=document.createElement("div");
+        const medal=["🥇","🥈","🥉"][i];
+        row.textContent=`${medal} ${t.name} – ⭐ ${t.avg.toFixed(1)}`;
+        rankingDiv.appendChild(row);
+    });
 }
 
-function updateAverage(id) {
-    const ratings = JSON.parse(localStorage.getItem(`ratings_${id}`)) || [];
-    const avgDiv = document.getElementById(`avg-${id}`);
-
-    if (ratings.length === 0) {
-        avgDiv.textContent = "Noch keine Bewertung";
-        return;
-    }
-
-    const sum = ratings.reduce((a, b) => a + b, 0);
-    const avg = (sum / ratings.length).toFixed(1);
-
-    avgDiv.textContent = `⭐ ${avg} / 5 (${ratings.length} Bewertungen)`;
-}
+render();
