@@ -1,7 +1,22 @@
 const teachers = [
-    { id: 1, name: "Herr M. – Mathematik" },
-    { id: 2, name: "Frau S. – Deutsch" },
-    { id: 3, name: "Herr K. – Physik" }
+    { id: 1, name: "Stefan Heuberger" },
+    { id: 2, name: "Helena Bauer" },
+    { id: 3, name: "Ingrid Vogtenhuber" },
+    { id: 4, name: "Markus Anzinger" },
+    { id: 5, name: "Christian Danner" },
+    { id: 6, name: "Daniela Fellinger" },
+    { id: 7, name: "Johann Fellinger" },
+    { id: 8, name: "Peter Föttinger" },
+    { id: 9, name: "Johannes Gadermaier" },
+    { id: 10, name: "Benedikt Griesmayr" },
+    { id: 11, name: "Johann Großpointner" },
+    { id: 12, name: "Mario Haberfellner" },
+    { id: 13, name: "Michael Holly-Schiemer" },
+    { id: 14, name: "Franz Kirchgatterer" },
+    { id: 15, name: "Christine Kolb" },
+    { id: 16, name: "Josef Krammer" },
+    { id: 17, name: "Tina Loibl" },
+    { id: 18, name: "Caroline Maier" }
 ];
 
 let selectedTeacher = null;
