@@ -19,37 +19,57 @@ const teachers = [
     { id: 18, name: "Caroline Maier" }
 ];
 
-let selectedTeacher = null;
-let selectedRating = 0;
+const list = document.getElementById("teacher-list");
 
-const listDiv = document.getElementById("teacher-list");
+teachers.forEach(t => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-teachers.forEach(teacher => {
-    const btn = document.createElement("button");
-    btn.textContent = teacher.name;
-    btn.onclick = () => openRating(teacher);
-    listDiv.appendChild(btn);
+    const title = document.createElement("h2");
+    title.textContent = t.name;
+
+    const starsDiv = document.createElement("div");
+    starsDiv.className = "stars";
+
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement("span");
+        star.textContent = "⭐";
+        star.onclick = () => addRating(t.id, i);
+        starsDiv.appendChild(star);
+    }
+
+    const avg = document.createElement("div");
+    avg.className = "avg";
+    avg.id = `avg-${t.id}`;
+
+    card.appendChild(title);
+    card.appendChild(starsDiv);
+    card.appendChild(avg);
+
+    list.appendChild(card);
+
+    updateAverage(t.id);
 });
 
-function openRating(teacher) {
-    selectedTeacher = teacher;
-    document.getElementById("teacher-name").textContent = teacher.name;
-    document.getElementById("rating-box").classList.remove("hidden");
+function addRating(id, value) {
+    const key = `ratings_${id}`;
+    const ratings = JSON.parse(localStorage.getItem(key)) || [];
+    ratings.push(value);
+    localStorage.setItem(key, JSON.stringify(ratings));
+    updateAverage(id);
 }
 
-document.querySelectorAll("#stars span").forEach(star => {
-    star.onclick = () => {
-        selectedRating = star.dataset.value;
-        alert(`Du hast ${selectedRating} Sterne gewählt`);
-    };
-});
+function updateAverage(id) {
+    const ratings = JSON.parse(localStorage.getItem(`ratings_${id}`)) || [];
+    const avgDiv = document.getElementById(`avg-${id}`);
 
-function saveRating() {
-    if (!selectedRating) {
-        alert("Bitte Sterne auswählen!");
+    if (ratings.length === 0) {
+        avgDiv.textContent = "Noch keine Bewertung";
         return;
     }
 
-    localStorage.setItem(`rating_${selectedTeacher.id}`, selectedRating);
-    alert("Bewertung gespeichert!");
+    const sum = ratings.reduce((a, b) => a + b, 0);
+    const avg = (sum / ratings.length).toFixed(1);
+
+    avgDiv.textContent = `⭐ ${avg} / 5  (${ratings.length} Bewertungen)`;
 }
