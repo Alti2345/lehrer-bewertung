@@ -26,17 +26,7 @@ const teachers = [
 const list = document.getElementById("teacher-list");
 const rankingDiv = document.getElementById("ranking");
 
-/* ===== Dark Mode ===== */
-const toggle = document.getElementById("themeToggle");
-if (localStorage.getItem("dark") === "true") {
-    document.body.classList.add("dark");
-}
-toggle.onclick = () => {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("dark", document.body.classList.contains("dark"));
-};
-
-/* ===== Bewertungen ===== */
+/* ===== Hilfsfunktionen ===== */
 function getRatings(id) {
     return JSON.parse(localStorage.getItem(`ratings_${id}`)) || [];
 }
@@ -44,17 +34,22 @@ function getRatings(id) {
 function getAverage(id) {
     const r = getRatings(id);
     if (r.length === 0) return null;
-    return r.reduce((a,b)=>a+b,0) / r.length;
+    return r.reduce((a, b) => a + b, 0) / r.length;
 }
 
+/* ===== Render ===== */
 function render() {
     list.innerHTML = "";
     rankingDiv.innerHTML = "";
 
     const ranked = teachers
-        .map(t => ({ ...t, avg: getAverage(t.id), count: getRatings(t.id).length }))
+        .map(t => ({
+            ...t,
+            avg: getAverage(t.id),
+            count: getRatings(t.id).length
+        }))
         .filter(t => t.avg !== null)
-        .sort((a,b)=>b.avg-a.avg);
+        .sort((a, b) => b.avg - a.avg);
 
     teachers.forEach(t => {
         const card = document.createElement("div");
@@ -73,37 +68,40 @@ function render() {
 
         const voted = localStorage.getItem(`voted_teacher_${t.id}`) === "true";
 
-        for (let i=1;i<=5;i++){
-            const s=document.createElement("span");
-            s.textContent="⭐";
-            if(!voted){
-                s.onclick=()=>{
-                    const r=getRatings(t.id);
+        for (let i = 1; i <= 5; i++) {
+            const s = document.createElement("span");
+            s.textContent = "⭐";
+
+            if (!voted) {
+                s.onclick = () => {
+                    const r = getRatings(t.id);
                     r.push(i);
-                    localStorage.setItem(`ratings_${t.id}`,JSON.stringify(r));
-                    localStorage.setItem(`voted_teacher_${t.id}`,"true");
+                    localStorage.setItem(`ratings_${t.id}`, JSON.stringify(r));
+                    localStorage.setItem(`voted_teacher_${t.id}`, "true");
                     render();
                 };
             } else {
-                s.style.opacity="0.4";
+                s.style.opacity = "0.4";
             }
+
             stars.appendChild(s);
         }
 
-        const avg=document.createElement("div");
-        avg.className="avg";
-        avg.textContent = t.avg
-            ? `⭐ ${t.avg.toFixed(1)} / 5 (${t.count})`
+        const avg = document.createElement("div");
+        avg.className = "avg";
+        const a = getAverage(t.id);
+        avg.textContent = a
+            ? `⭐ ${a.toFixed(1)} / 5 (${getRatings(t.id).length})`
             : "Noch keine Bewertung";
 
-        card.append(title,stars,avg);
+        card.append(title, stars, avg);
         list.appendChild(card);
     });
 
-    ranked.slice(0,3).forEach((t,i)=>{
-        const row=document.createElement("div");
-        const medal=["🥇","🥈","🥉"][i];
-        row.textContent=`${medal} ${t.name} – ⭐ ${t.avg.toFixed(1)}`;
+    ranked.slice(0, 3).forEach((t, i) => {
+        const row = document.createElement("div");
+        const medal = ["🥇", "🥈", "🥉"][i];
+        row.textContent = `${medal} ${t.name} – ⭐ ${t.avg.toFixed(1)}`;
         rankingDiv.appendChild(row);
     });
 }
